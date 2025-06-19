@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kitchen Dashboard - Social Tea</title>
+<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-kitchen">
+  <div class="container">
+    <div class="menu-section-header">Kitchen Dashboard</div>
+    <div id="kitchenOrders" class="kitchen-orders-list"></div>
+    <p class="text-center"><a href="index.html" class="link">Back to Home</a></p>
+  </div>
+
+<script>
+  const kitchenOrdersDiv = document.getElementById('kitchenOrders');
+
+  function renderOrders() {
+    const orders = JSON.parse(localStorage.getItem('orders')) || [];
+    kitchenOrdersDiv.innerHTML = '';
+
+    if (orders.length === 0) {
+      kitchenOrdersDiv.innerHTML = '<div style="text-align:center;opacity:0.7;">No active orders</div>';
+      return;
+    }
+
+    orders.forEach((order, idx) => {
+      const card = document.createElement('div');
+      card.className = 'kitchen-order-card';
+      card.innerHTML = `
+        <div class="kitchen-order-header">
+          <span class="kitchen-order-token">#${order.token}</span>
+          <span class="kitchen-order-source">${order.source}</span>
+          <span class="kitchen-order-time">${order.time}</span>
+        </div>
+        <div class="kitchen-order-items">${order.items.map(i => i.name).join(', ')}</div>
+        <div>
+          <span class="kitchen-order-status${order.status === 'Ready' ? ' ready' : ''}">${order.status}</span>
+          <span class="kitchen-order-action">${order.status !== 'Ready' ? `<button onclick="updateStatus(${idx})" class="btn btn-small btn-success">Mark Ready</button>` : ''}</span>
+        </div>
+      `;
+      kitchenOrdersDiv.appendChild(card);
+    });
+  }
+
+  function updateStatus(index) {
+    const orders = JSON.parse(localStorage.getItem('orders')) || [];
+    if (orders[index]) {
+      orders[index].status = 'Ready';
+      localStorage.setItem('orders', JSON.stringify(orders));
+      renderOrders();
+    }
+  }
+
+  renderOrders();
+  setInterval(renderOrders, 5000);
+</script>
+<script src="effects.js"></script>
+</body>
+</html>

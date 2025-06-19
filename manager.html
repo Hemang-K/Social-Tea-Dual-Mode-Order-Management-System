@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manager Ordering - Social Tea</title>
+<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-manager">
+  <div class="container">
+    <div class="menu-section-header">Manager Menu</div>
+    <div id="managerMenu" class="manager-menu-list"></div>
+    <div class="order-section">
+      <h2>Current Order</h2>
+      <ul id="orderList" class="order-list"></ul>
+      <div id="cartSummary" class="cart-summary"></div>
+      <button id="placeOrderBtn" disabled class="btn btn-primary btn-block">Place Order</button>
+      <p id="orderMsg" class="order-message"></p>
+    </div>
+    <p class="text-center"><a href="index.html" class="link">Back to Home</a></p>
+  </div>
+
+<script>
+  const menuItems = [
+    { id: 1, name: "Masala Chai", price: 20, img: "https://spicestationsilverlake.com/wp-content/uploads/2023/03/An-Introduction-to-Masala-Chai-Indias-Spiced-Tea.jpg", desc: "Classic Indian spiced tea with milk." },
+    { id: 2, name: "Ginger Tea", price: 25, img: "https://draxe.com/wp-content/uploads/2020/04/DrAxeGingerTeaThumbnail.jpg", desc: "Refreshing tea brewed with fresh ginger." },
+    { id: 3, name: "Green Tea", price: 30, img: "https://img.freepik.com/free-photo/hot-drink-cup-tea-tea-drink-nutritional_1172-354.jpg?semt=ais_hybrid&w=740", desc: "Light and healthy green tea." },
+    { id: 4, name: "Lemon Tea", price: 20, img: "https://cdn.shopify.com/s/files/1/1146/8126/files/Lemon-Tea-Pictures_large.jpg?v=1503945632", desc: "Tangy lemon-flavored black tea." },
+    { id: 5, name: "Elaichi Tea", price: 35, img: "https://shiatea.com/cdn/shop/files/cardamomchai9.jpg?v=1706084387&width=1445", desc: "Aromatic cardamom-infused tea." },
+    { id: 6, name: "Vada Pav", price: 30, img: "https://images.pexels.com/photos/17433337/pexels-photo-17433337.jpeg?cs=srgb&dl=pexels-aditya-mara-425995080-17433337.jpg&fm=jpg", desc: "Mumbai's favorite spicy potato fritter in a bun." },
+    { id: 7, name: "Samosa", price: 20, img: "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/samosa-recipe.jpg", desc: "Crispy pastry filled with spicy potatoes." },
+    { id: 8, name: "Kanda Bhaji", price: 25, img: "https://www.vegrecipesofindia.com/wp-content/uploads/2016/07/kanda-bhaji-recipe12a.jpg", desc: "Onion fritters, perfect with chai." },
+    { id: 9, name: "Poha", price: 25, img: "https://www.cookwithmanali.com/wp-content/uploads/2014/08/Poha-Recipe.jpg", desc: "Flattened rice cooked with spices and veggies." },
+    { id: 10, name: "Dhokla", price: 30, img: "https://images.aws.nestle.recipes/original/00df819a83753f67b270520205ee93ad_khaman_dhokla_recipe.jpeg", desc: "Steamed savory cake from Gujarat." },
+    { id: 11, name: "Pav Bhaji", price: 50, img: "https://static.toiimg.com/photo/52416693.cms", desc: "Spicy mashed veggies served with buttered bread." },
+    { id: 12, name: "Chai Biscuit", price: 10, img: "https://www.shutterstock.com/image-photo/cookies-biscuit-tea-snacks-indian-600nw-2492358215.jpg", desc: "Crispy biscuits, perfect with tea." }
+  ];
+
+  const orderList = document.getElementById('orderList');
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+  const orderMsg = document.getElementById('orderMsg');
+  const managerMenuDiv = document.getElementById('managerMenu');
+
+  let order = [];
+
+  function renderMenu() {
+    managerMenuDiv.innerHTML = '';
+    menuItems.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'manager-menu-card';
+      const inOrder = order.find(i => i.id === item.id);
+      card.innerHTML = `
+        <img src="${item.img}" alt="${item.name}" class="manager-menu-img">
+        <div class="manager-menu-info">
+          <div class="manager-menu-title">${item.name}</div>
+          <div class="manager-menu-desc">${item.desc}</div>
+          <div class="manager-menu-price">₹${item.price}</div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-small btn-secondary" onclick="changeQtyFromMenu(${item.id}, -1)">-</button>
+            <span class="order-qty">${inOrder ? inOrder.qty : 0}</span>
+            <button class="btn btn-small btn-secondary" onclick="changeQtyFromMenu(${item.id}, 1)">+</button>
+          </div>
+        </div>
+      `;
+      managerMenuDiv.appendChild(card);
+    });
+  }
+
+  function renderOrder() {
+    orderList.innerHTML = '';
+    order.forEach((item, idx) => {
+      const li = document.createElement('li');
+      li.className = 'order-item';
+      li.innerHTML = `
+        <span>${item.name} - ₹${item.price} 
+          <button class="btn btn-small btn-secondary" onclick="changeQty(${idx}, -1)">-</button>
+          <span class="order-qty">${item.qty}</span>
+          <button class="btn btn-small btn-secondary" onclick="changeQty(${idx}, 1)">+</button>
+        </span>
+        <button onclick="removeFromOrder(${idx})" class="btn btn-small btn-danger">Remove</button>
+      `;
+      orderList.appendChild(li);
+    });
+    placeOrderBtn.disabled = order.length === 0;
+    renderCartSummary();
+  }
+
+  function changeQtyFromMenu(id, delta) {
+    const idx = order.findIndex(i => i.id === id);
+    if (idx !== -1) {
+      order[idx].qty += delta;
+      if (order[idx].qty <= 0) order.splice(idx, 1);
+    } else if (delta > 0) {
+      const item = menuItems.find(i => i.id === id);
+      order.push({ ...item, qty: 1 });
+    }
+    renderMenu();
+    renderOrder();
+  }
+
+  function changeQty(idx, delta) {
+    order[idx].qty += delta;
+    if (order[idx].qty <= 0) {
+      order.splice(idx, 1);
+    }
+    renderMenu();
+    renderOrder();
+  }
+
+  function removeFromOrder(idx) {
+    order.splice(idx, 1);
+    renderMenu();
+    renderOrder();
+  }
+
+  function renderCartSummary() {
+    let summary = document.getElementById('cartSummary');
+    if (!summary) {
+      summary = document.createElement('div');
+      summary.id = 'cartSummary';
+      summary.className = 'cart-summary';
+      orderList.parentNode.insertBefore(summary, orderList.nextSibling);
+    }
+    if (order.length === 0) {
+      summary.innerHTML = '';
+      return;
+    }
+    const totalItems = order.reduce((sum, item) => sum + item.qty, 0);
+    const totalPrice = order.reduce((sum, item) => sum + item.qty * item.price, 0);
+    summary.innerHTML = `<div><strong>Total Items:</strong> ${totalItems}</div><div><strong>Total Price:</strong> ₹${totalPrice}</div>`;
+  }
+
+  placeOrderBtn.addEventListener('click', () => {
+    if(order.length === 0) return;
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
+    const token = orders.length + 1;
+    const newOrder = {
+      token,
+      items: order,
+      time: new Date().toLocaleTimeString(),
+      source: 'Manager',
+      status: 'Pending'
+    };
+    orders.push(newOrder);
+    localStorage.setItem('orders', JSON.stringify(orders));
+    order = [];
+    renderMenu();
+    renderOrder();
+    orderMsg.textContent = `✅ Order placed! Token number: ${token}`;
+  });
+
+  renderMenu();
+  renderOrder();
+</script>
+<script src="effects.js"></script>
+</body>
+</html>
